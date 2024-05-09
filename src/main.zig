@@ -2,6 +2,8 @@ const std = @import("std");
 const fs = std.fs;
 const linux = std.os.linux;
 
+const version = "0.0.1";
+
 const Command = enum {
     exit,
     noop,
@@ -61,8 +63,8 @@ fn editorRefreshScreen(writer: std.fs.File.Writer, with_rows: bool) !void {
 
     const stringBufferWriter = stringBuffer.writer();
 
-    // clear screen
-    _ = try stringBufferWriter.write("\x1b[2J");
+    // hide cursor
+    _ = try stringBufferWriter.write("\x1b[?25l");
     // set cursor to top left
     _ = try stringBufferWriter.write("\x1b[H");
 
@@ -71,12 +73,34 @@ fn editorRefreshScreen(writer: std.fs.File.Writer, with_rows: bool) !void {
         _ = try stringBufferWriter.write("\x1b[H");
     }
 
+    // show cursor
+    _ = try stringBufferWriter.write("\x1b[?25h");
+
     _ = try writer.writeAll(stringBuffer.items);
 }
 
 fn editorDrawRows(rows: u16, writer: anytype) !void {
     for (0..rows) |row| {
-        _ = try writer.write("~");
+        // add welcome message and padding
+        if (row == config.screen_rows / 3) {
+            const welcome_msg = std.fmt.comptimePrint("Kilo Editor -- version {s}", .{version});
+            var padding = (config.screen_cols - welcome_msg.len) / 2;
+            if (padding > 0) {
+                _ = try writer.write("~");
+                padding -= 1;
+            }
+
+            while (padding > 0) : (padding -= 1) {
+                _ = try writer.write(" ");
+            }
+
+            _ = try writer.write(welcome_msg);
+        } else {
+            _ = try writer.write("~");
+        }
+
+        // clear line
+        _ = try writer.write("\x1b[K");
 
         if (row < config.screen_rows - 1) {
             _ = try writer.write("\r\n");
