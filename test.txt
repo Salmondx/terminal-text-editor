@@ -1,0 +1,3 @@
+Hello, World!
+
+Text editor example based on C tutorial: https://viewsourcecode.org/snaptoken/kilo/04.aTextViewer.html
